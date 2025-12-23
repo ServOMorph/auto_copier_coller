@@ -1,13 +1,12 @@
 import time
 import pyautogui
 from config import DELAY
-from outils.affichage_rouge import afficher_rectangle, afficher_croix, afficher_texte_action
+from outils.affichage_rouge import afficher_rectangle, afficher_croix
 
 IMAGE_ZONE = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\zone_copier_comet.png"
 IMAGE_ZONE_2 = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\zone_copier_comet_2.png"
 IMAGE_COPIER = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\copier_comet.png"
 LEFT_SCREEN_REGION = (0, 0, 960, 1080)
-LEFT_SCREEN_CENTER = (480, 540)
 CONFIDENCE = 0.6
 TIMEOUT = 300
 
@@ -68,18 +67,10 @@ def execute():
                     else:
                         print("  Bouton disparu apres attente, nouvelle recherche...")
                 else:
-                    _scroll_page(iteration, elapsed)
+                    pass
             else:
-                _scroll_page(iteration, elapsed)
+                pass
         except pyautogui.ImageNotFoundException:
-            _scroll_page(iteration, elapsed)
+            pass
 
         time.sleep(0.5)
-
-
-def _scroll_page(iteration, elapsed):
-    if iteration % 10 == 0:
-        print(f"  [{elapsed:.1f}s] Iter {iteration}: bouton non trouve, scroll...")
-    pyautogui.click(LEFT_SCREEN_CENTER[0], LEFT_SCREEN_CENTER[1])
-    afficher_texte_action("PAGEDOWN", duree=0.3)
-    pyautogui.press('pagedown')

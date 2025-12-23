@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Forge - Idle Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: url('../../assets/images/background.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #eee;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+        .header {
+            margin-bottom: 20px;
+        }
+        .logo {
+            max-width: 200px;
+            height: auto;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.5));
+        }
+        .game-container {
+            text-align: center;
+            padding: 40px;
+            background-color: rgba(22, 33, 62, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+            border: 1px solid rgba(0, 255, 0, 0.2);
+        }
+        .points-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #4ade80;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+        }
+        .label {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #a0a0a0;
+        }
+        .click-btn {
+            margin-top: 30px;
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+        }
+        .click-btn:hover {
+            background-color: #16a34a;
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
+        }
+        .click-btn:active {
+            transform: scale(0.95);
+        }
+        .click-btn img {
+            width: 32px;
+            height: 32px;
+        }
+        .generator-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 255, 0, 0.2);
+        }
+        .generator-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #0f766e;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 10px rgba(15, 118, 110, 0.4);
+        }
+        .generator-btn:hover:not(:disabled) {
+            background-color: #14b8a6;
+            box-shadow: 0 0 20px rgba(20, 184, 166, 0.5);
+        }
+        .generator-btn:disabled {
+            background-color: #374151;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .generator-btn img {
+            width: 24px;
+            height: 24px;
+        }
+        .generator-info {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #a0a0a0;
+        }
+        .per-second {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #4ade80;
+        }
+        .upgrade-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 255, 0, 0.2);
+        }
+        .upgrade-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
+        }
+        .upgrade-btn:hover:not(:disabled) {
+            background-color: #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+        .upgrade-btn:disabled {
+            background-color: #374151;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .upgrade-btn img {
+            width: 24px;
+            height: 24px;
+        }
+        .upgrade-info {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #a0a0a0;
+        }
+        .prestige-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 215, 0, 0.3);
+            display: none;
+        }
+        .prestige-section.visible {
+            display: block;
+        }
+        .prestige-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+        }
+        .prestige-btn:hover {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
+        }
+        .prestige-btn:active {
+            transform: scale(0.95);
+        }
+        .prestige-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #fbbf24;
+        }
+        .prestige-stats {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #a0a0a0;
+        }
+        .prestige-bonus {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: rgba(245, 158, 11, 0.15);
+            border-radius: 8px;
+            font-size: 14px;
+            color: #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="../../assets/images/logo.png" alt="Pixel Forge" class="logo">
+    </div>
+    <div class="game-container">
+        <div class="label">Points</div>
+        <div class="points-display" id="points">0</div>
+        <button class="click-btn" onclick="clickForPoints()">
+            <img src="../../assets/images/icon-click.png" alt="">
+            <span>+1 Point</span>
+        </button>
+        <div class="per-second" id="perSecond">+0 /sec</div>
+        <div class="generator-section">
+            <button class="generator-btn" id="buyGenerator" onclick="buyGenerator()">Generateur (10 pts)</button>
+            <div class="generator-info">Generateurs: <span id="generatorCount">0</span></div>
+        </div>
+        <div class="upgrade-section">
+            <button class="upgrade-btn" id="buyMultiplier" onclick="buyMultiplier()">
+                <img src="../../assets/images/icon-multiplier.png" alt="">
+                <span>Multiplicateur x2 (50 pts)</span>
+            </button>
+            <div class="upgrade-info">Niveau: <span id="multiplierLevel">0</span> | Clic: x<span id="multiplierValue">1</span></div>
+        </div>
+        <div class="prestige-section" id="prestigeSection">
+            <button class="prestige-btn" onclick="doPrestige()">Prestige (+<span id="prestigeGain">0</span> pts)</button>
+            <div class="prestige-info">Points de prestige: <span id="prestigePoints">0</span></div>
+            <div class="prestige-stats">Prestiges: <span id="totalPrestiges">0</span> | Record: <span id="maxPoints">0</span> pts</div>
+            <div class="prestige-bonus" id="prestigeBonus">Bonus: +0% production</div>
+        </div>
+    </div>
+
+    <script>
+        let points = 0;
+        let generators = 0;
+        let multiplierLevel = 0;
+        let clickMultiplier = 1;
+        let maxPoints = 0;
+        let prestigePoints = 0;
+        let totalPrestiges = 0;
+        const generatorCost = 10;
+        const multiplierCost = 50;
+
+        function saveGame() {
+            const saveData = {
+                points: points,
+                generators: generators,
+                multiplierLevel: multiplierLevel,
+                clickMultiplier: clickMultiplier,
+                maxPoints: maxPoints,
+                prestigePoints: prestigePoints,
+                totalPrestiges: totalPrestiges
+            };
+            localStorage.setItem('idleGameSave', JSON.stringify(saveData));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('idleGameSave');
+            if (saved) {
+                const data = JSON.parse(saved);
+                points = data.points || 0;
+                generators = data.generators || 0;
+                multiplierLevel = data.multiplierLevel || 0;
+                clickMultiplier = data.clickMultiplier || 1;
+                maxPoints = data.maxPoints || 0;
+                prestigePoints = data.prestigePoints || 0;
+                totalPrestiges = data.totalPrestiges || 0;
+            }
+        }
+
+        function getPrestigeBonus() {
+            return 1 + (prestigePoints * 0.1);
+        }
+
+        function calculatePrestigeGain() {
+            return Math.floor(Math.sqrt(maxPoints / 1000));
+        }
+
+        function updateDisplay() {
+            if (points > maxPoints) {
+                maxPoints = points;
+            }
+            document.getElementById('points').textContent = points;
+            document.getElementById('generatorCount').textContent = generators;
+            const productionPerSec = Math.floor(generators * getPrestigeBonus());
+            document.getElementById('perSecond').textContent = '+' + productionPerSec + ' /sec';
+            document.getElementById('multiplierLevel').textContent = multiplierLevel;
+            document.getElementById('multiplierValue').textContent = clickMultiplier;
+            document.getElementById('buyGenerator').disabled = points < generatorCost;
+            document.getElementById('buyMultiplier').disabled = points < multiplierCost;
+
+            const prestigeGain = calculatePrestigeGain();
+            document.getElementById('prestigeGain').textContent = prestigeGain;
+            document.getElementById('prestigePoints').textContent = prestigePoints;
+            document.getElementById('totalPrestiges').textContent = totalPrestiges;
+            document.getElementById('maxPoints').textContent = maxPoints;
+            document.getElementById('prestigeBonus').textContent = 'Bonus: +' + (prestigePoints * 10) + '% production';
+
+            const prestigeSection = document.getElementById('prestigeSection');
+            if (maxPoints >= 1000) {
+                prestigeSection.classList.add('visible');
+            } else {
+                prestigeSection.classList.remove('visible');
+            }
+        }
+
+        function clickForPoints() {
+            points += clickMultiplier;
+            updateDisplay();
+        }
+
+        function buyGenerator() {
+            if (points >= generatorCost) {
+                points -= generatorCost;
+                generators += 1;
+                updateDisplay();
+            }
+        }
+
+        function buyMultiplier() {
+            if (points >= multiplierCost) {
+                points -= multiplierCost;
+                multiplierLevel += 1;
+                clickMultiplier *= 2;
+                updateDisplay();
+            }
+        }
+
+        function doPrestige() {
+            const gain = calculatePrestigeGain();
+            if (gain <= 0) return;
+
+            prestigePoints += gain;
+            totalPrestiges += 1;
+
+            points = 0;
+            generators = 0;
+            multiplierLevel = 0;
+            clickMultiplier = 1;
+
+            saveGame();
+            updateDisplay();
+        }
+
+        setInterval(function() {
+            if (generators > 0) {
+                points += Math.floor(generators * getPrestigeBonus());
+                updateDisplay();
+            }
+        }, 1000);
+
+        setInterval(saveGame, 5000);
+
+        window.addEventListener('beforeunload', saveGame);
+
+        loadGame();
+        updateDisplay();
+    </script>
+</body>
+</html>
