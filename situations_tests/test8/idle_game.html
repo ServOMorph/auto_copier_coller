@@ -210,33 +210,155 @@
             font-size: 14px;
             color: #fbbf24;
         }
+        .bonus-item {
+            position: fixed;
+            font-size: 40px;
+            cursor: pointer;
+            z-index: 1000;
+            animation: float 2s ease-in-out infinite, pulse 1s ease-in-out infinite;
+            transition: transform 0.1s;
+            user-select: none;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+        .bonus-item:hover {
+            transform: scale(1.2);
+        }
+        .bonus-item:active {
+            transform: scale(0.9);
+        }
+        .bonus-item.star { color: #ffd700; }
+        .bonus-item.coin { color: #f59e0b; }
+        .bonus-item.crystal { color: #8b5cf6; }
+        .bonus-item.lightning { color: #3b82f6; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(1.5); }
+        }
+        .bonus-collected {
+            animation: fadeOut 0.3s ease-out forwards;
+            pointer-events: none;
+        }
+        .effect-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 999;
+            display: none;
+        }
+        .effect-indicator.active {
+            display: block;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        .effect-indicator.star-effect {
+            background: linear-gradient(135deg, #ffd700, #f59e0b);
+            color: #000;
+        }
+        .effect-indicator.lightning-effect {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+        }
+        .floating-text {
+            position: fixed;
+            pointer-events: none;
+            font-weight: bold;
+            font-size: 20px;
+            color: #4ade80;
+            text-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 1001;
+        }
+        .floating-text.bonus { color: #ffd700; font-size: 24px; }
+        .floating-text.prestige { color: #f59e0b; font-size: 28px; }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-60px) scale(0.8); }
+        }
+        @keyframes buttonPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.8); }
+        }
+        .click-btn.clicking {
+            animation: buttonPop 0.15s ease-out;
+        }
+        .points-display.updated {
+            animation: shake 0.2s ease-out;
+        }
+        .game-container.star-active {
+            animation: glow 0.5s ease-in-out infinite;
+        }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(74, 222, 128, 0.4);
+            pointer-events: none;
+            animation: rippleEffect 0.5s ease-out forwards;
+        }
+        @keyframes rippleEffect {
+            0% { width: 0; height: 0; opacity: 1; }
+            100% { width: 100px; height: 100px; opacity: 0; }
+        }
+        .particle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleFly 0.6s ease-out forwards;
+        }
+        @keyframes particleFly {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+        }
     </style>
 </head>
 <body>
+    <div class="effect-indicator" id="effectIndicator"></div>
     <div class="header">
         <img src="../../assets/images/logo.png" alt="Pixel Forge" class="logo">
     </div>
     <div class="game-container">
         <div class="label">Points</div>
         <div class="points-display" id="points">0</div>
-        <button class="click-btn" onclick="clickForPoints()">
+        <button class="click-btn" onclick="clickForPoints(event)">
             <img src="../../assets/images/icon-click.png" alt="">
             <span>+1 Point</span>
         </button>
         <div class="per-second" id="perSecond">+0 /sec</div>
         <div class="generator-section">
-            <button class="generator-btn" id="buyGenerator" onclick="buyGenerator()">Generateur (10 pts)</button>
+            <button class="generator-btn" id="buyGenerator" onclick="buyGenerator(event)">Generateur (10 pts)</button>
             <div class="generator-info">Generateurs: <span id="generatorCount">0</span></div>
         </div>
         <div class="upgrade-section">
-            <button class="upgrade-btn" id="buyMultiplier" onclick="buyMultiplier()">
+            <button class="upgrade-btn" id="buyMultiplier" onclick="buyMultiplier(event)">
                 <img src="../../assets/images/icon-multiplier.png" alt="">
                 <span>Multiplicateur x2 (50 pts)</span>
             </button>
             <div class="upgrade-info">Niveau: <span id="multiplierLevel">0</span> | Clic: x<span id="multiplierValue">1</span></div>
         </div>
         <div class="prestige-section" id="prestigeSection">
-            <button class="prestige-btn" onclick="doPrestige()">Prestige (+<span id="prestigeGain">0</span> pts)</button>
+            <button class="prestige-btn" onclick="doPrestige(event)">Prestige (+<span id="prestigeGain">0</span> pts)</button>
             <div class="prestige-info">Points de prestige: <span id="prestigePoints">0</span></div>
             <div class="prestige-stats">Prestiges: <span id="totalPrestiges">0</span> | Record: <span id="maxPoints">0</span> pts</div>
             <div class="prestige-bonus" id="prestigeBonus">Bonus: +0% production</div>
@@ -253,6 +375,184 @@
         let totalPrestiges = 0;
         const generatorCost = 10;
         const multiplierCost = 50;
+
+        let activeEffects = {
+            starMultiplier: false,
+            lightningSpeed: false
+        };
+        let starTimer = null;
+        let lightningTimer = null;
+
+        const bonusTypes = [
+            { type: 'star', symbol: '\u2B50', effect: 'x5 clics pendant 10s', duration: 5000 },
+            { type: 'coin', symbol: '\uD83D\uDCB0', effect: '+50 points', duration: 4000 },
+            { type: 'crystal', symbol: '\uD83D\uDC8E', effect: '+1 generateur gratuit', duration: 6000 },
+            { type: 'lightning', symbol: '\u26A1', effect: 'Production x3 pendant 15s', duration: 4000 }
+        ];
+
+        function spawnBonusItem() {
+            const bonus = bonusTypes[Math.floor(Math.random() * bonusTypes.length)];
+            const item = document.createElement('div');
+            item.className = 'bonus-item ' + bonus.type;
+            item.textContent = bonus.symbol;
+            item.title = bonus.effect;
+
+            const margin = 60;
+            const x = margin + Math.random() * (window.innerWidth - 2 * margin);
+            const y = margin + Math.random() * (window.innerHeight - 2 * margin);
+            item.style.left = x + 'px';
+            item.style.top = y + 'px';
+
+            item.onclick = function() { collectBonus(item, bonus.type); };
+            document.body.appendChild(item);
+
+            setTimeout(function() {
+                if (item.parentNode) {
+                    item.classList.add('bonus-collected');
+                    setTimeout(function() { item.remove(); }, 300);
+                }
+            }, bonus.duration);
+        }
+
+        function collectBonus(element, type) {
+            const rect = element.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+
+            element.classList.add('bonus-collected');
+            setTimeout(function() { element.remove(); }, 300);
+
+            playBonusSound();
+            const indicator = document.getElementById('effectIndicator');
+            const container = document.querySelector('.game-container');
+
+            switch(type) {
+                case 'star':
+                    activeEffects.starMultiplier = true;
+                    container.classList.add('star-active');
+                    if (starTimer) clearTimeout(starTimer);
+                    indicator.textContent = '\u2B50 x5 Clics! (10s)';
+                    indicator.className = 'effect-indicator active star-effect';
+                    showFloatingText('x5 CLICS!', cx - 40, cy - 20, 'bonus');
+                    createParticles(cx, cy, '#ffd700', 10);
+                    starTimer = setTimeout(function() {
+                        activeEffects.starMultiplier = false;
+                        indicator.classList.remove('active');
+                        container.classList.remove('star-active');
+                    }, 10000);
+                    break;
+
+                case 'coin':
+                    points += 50;
+                    updateDisplay();
+                    showFloatingText('+50 pts', cx - 30, cy - 20, 'bonus');
+                    createParticles(cx, cy, '#f59e0b', 8);
+                    break;
+
+                case 'crystal':
+                    generators += 1;
+                    updateDisplay();
+                    showFloatingText('+1 GEN', cx - 30, cy - 20, 'bonus');
+                    createParticles(cx, cy, '#8b5cf6', 8);
+                    break;
+
+                case 'lightning':
+                    activeEffects.lightningSpeed = true;
+                    if (lightningTimer) clearTimeout(lightningTimer);
+                    indicator.textContent = '\u26A1 Production x3! (15s)';
+                    indicator.className = 'effect-indicator active lightning-effect';
+                    showFloatingText('BOOST x3!', cx - 40, cy - 20, 'bonus');
+                    createParticles(cx, cy, '#3b82f6', 10);
+                    lightningTimer = setTimeout(function() {
+                        activeEffects.lightningSpeed = false;
+                        indicator.classList.remove('active');
+                    }, 15000);
+                    break;
+            }
+        }
+
+        function scheduleBonusSpawn() {
+            const delay = 8000 + Math.random() * 12000;
+            setTimeout(function() {
+                spawnBonusItem();
+                scheduleBonusSpawn();
+            }, delay);
+        }
+
+        scheduleBonusSpawn();
+
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+        }
+
+        function playSound(freq, duration, type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = freq;
+            osc.type = type || 'sine';
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playClickSound() {
+            playSound(800, 0.08, 'square');
+        }
+
+        function playBonusSound() {
+            playSound(523, 0.1, 'sine');
+            setTimeout(function() { playSound(659, 0.1, 'sine'); }, 50);
+            setTimeout(function() { playSound(784, 0.15, 'sine'); }, 100);
+        }
+
+        function playPurchaseSound() {
+            playSound(440, 0.1, 'triangle');
+            setTimeout(function() { playSound(550, 0.1, 'triangle'); }, 80);
+        }
+
+        function playPrestigeSound() {
+            playSound(392, 0.15, 'sine');
+            setTimeout(function() { playSound(523, 0.15, 'sine'); }, 100);
+            setTimeout(function() { playSound(659, 0.15, 'sine'); }, 200);
+            setTimeout(function() { playSound(784, 0.25, 'sine'); }, 300);
+        }
+
+        function showFloatingText(text, x, y, type) {
+            const elem = document.createElement('div');
+            elem.className = 'floating-text' + (type ? ' ' + type : '');
+            elem.textContent = text;
+            elem.style.left = x + 'px';
+            elem.style.top = y + 'px';
+            document.body.appendChild(elem);
+            setTimeout(function() { elem.remove(); }, 800);
+        }
+
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = x + 'px';
+                p.style.top = y + 'px';
+                p.style.backgroundColor = color;
+                const angle = (Math.PI * 2 * i) / count;
+                const dist = 30 + Math.random() * 40;
+                p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+                p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+                document.body.appendChild(p);
+                setTimeout(function() { p.remove(); }, 600);
+            }
+        }
+
+        document.addEventListener('click', function() { initAudio(); }, { once: true });
 
         function saveGame() {
             const saveData = {
@@ -317,29 +617,58 @@
             }
         }
 
-        function clickForPoints() {
-            points += clickMultiplier;
+        function clickForPoints(event) {
+            let gain = clickMultiplier;
+            if (activeEffects.starMultiplier) {
+                gain *= 5;
+            }
+            points += gain;
             updateDisplay();
+
+            playClickSound();
+            const btn = document.querySelector('.click-btn');
+            btn.classList.remove('clicking');
+            void btn.offsetWidth;
+            btn.classList.add('clicking');
+
+            const pointsEl = document.getElementById('points');
+            pointsEl.classList.remove('updated');
+            void pointsEl.offsetWidth;
+            pointsEl.classList.add('updated');
+
+            if (event) {
+                showFloatingText('+' + gain, event.clientX - 20, event.clientY - 30);
+                createParticles(event.clientX, event.clientY, '#4ade80', 6);
+            }
         }
 
-        function buyGenerator() {
+        function buyGenerator(event) {
             if (points >= generatorCost) {
                 points -= generatorCost;
                 generators += 1;
                 updateDisplay();
+                playPurchaseSound();
+                if (event) {
+                    showFloatingText('+1 Gen', event.clientX - 20, event.clientY - 30, 'bonus');
+                }
             }
         }
 
-        function buyMultiplier() {
+        function buyMultiplier(event) {
             if (points >= multiplierCost) {
                 points -= multiplierCost;
                 multiplierLevel += 1;
                 clickMultiplier *= 2;
                 updateDisplay();
+                playPurchaseSound();
+                if (event) {
+                    showFloatingText('x' + clickMultiplier, event.clientX - 20, event.clientY - 30, 'bonus');
+                    createParticles(event.clientX, event.clientY, '#8b5cf6', 8);
+                }
             }
         }
 
-        function doPrestige() {
+        function doPrestige(event) {
             const gain = calculatePrestigeGain();
             if (gain <= 0) return;
 
@@ -353,11 +682,20 @@
 
             saveGame();
             updateDisplay();
+            playPrestigeSound();
+            if (event) {
+                showFloatingText('+' + gain + ' Prestige!', event.clientX - 40, event.clientY - 30, 'prestige');
+                createParticles(event.clientX, event.clientY, '#f59e0b', 12);
+            }
         }
 
         setInterval(function() {
             if (generators > 0) {
-                points += Math.floor(generators * getPrestigeBonus());
+                let production = Math.floor(generators * getPrestigeBonus());
+                if (activeEffects.lightningSpeed) {
+                    production *= 3;
+                }
+                points += production;
                 updateDisplay();
             }
         }, 1000);
