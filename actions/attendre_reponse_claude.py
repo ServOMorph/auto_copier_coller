@@ -1,23 +1,11 @@
 import time
-import tkinter as tk
 import pyautogui
+from outils.affichage_rouge import afficher_rectangle
 
 IMAGE_FIN_CONV = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\fin_conv_claude.png"
 RIGHT_SCREEN_REGION = (960, 0, 960, 1080)
 CONFIDENCE = 0.8
 
-def draw_red_rectangle(location, duration=3):
-    x, y, w, h = location.left, location.top, location.width, location.height
-    root = tk.Tk()
-    root.overrideredirect(True)
-    root.attributes('-topmost', True)
-    root.attributes('-transparentcolor', 'white')
-    root.geometry(f"{w + 10}x{h + 10}+{x - 5}+{y - 5}")
-    canvas = tk.Canvas(root, width=w + 10, height=h + 10, bg='white', highlightthickness=0)
-    canvas.pack()
-    canvas.create_rectangle(3, 3, w + 7, h + 7, outline='red', width=4)
-    root.after(int(duration * 1000), root.destroy)
-    root.mainloop()
 
 def execute():
     print("Attente reponse Claude...")
@@ -32,7 +20,12 @@ def execute():
             )
             if location:
                 print(f"  Fin de conversation trouvee: {location}")
-                draw_red_rectangle(location)
+                afficher_rectangle(
+                    location.left,
+                    location.top,
+                    location.width,
+                    location.height
+                )
                 return True
             else:
                 if iteration % 10 == 0:

@@ -18,6 +18,14 @@
             font-size: 48px;
             margin-bottom: 20px;
         }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 0.2s ease-in-out;
+        }
         button {
             font-size: 24px;
             padding: 10px 30px;
@@ -30,19 +38,60 @@
     <button onclick="decrement()">-1</button>
     <button onclick="increment()">+1</button>
     <button onclick="reset()">Reset</button>
+    <div style="margin-top: 20px;">
+        <label for="maxLimit">Limite max:</label>
+        <input type="number" id="maxLimit" min="1" value="10" onchange="validateMax()">
+    </div>
     <script>
         let count = 0;
+        let maxLimit = 10;
+        function updateDisplay() {
+            let counterEl = document.getElementById('counter');
+            counterEl.textContent = count;
+            if (count > 5) {
+                counterEl.style.color = 'green';
+            } else if (count < 0) {
+                counterEl.style.color = 'red';
+            } else {
+                counterEl.style.color = '';
+            }
+        }
+        function triggerPulse() {
+            let counterEl = document.getElementById('counter');
+            counterEl.classList.remove('pulse');
+            void counterEl.offsetWidth;
+            counterEl.classList.add('pulse');
+        }
+        function validateMax() {
+            let value = parseInt(document.getElementById('maxLimit').value);
+            if (isNaN(value) || value <= 0) {
+                document.getElementById('maxLimit').value = maxLimit;
+            } else {
+                maxLimit = value;
+                if (count > maxLimit) {
+                    count = maxLimit;
+                    updateDisplay();
+                }
+            }
+        }
         function increment() {
-            count++;
-            document.getElementById('counter').textContent = count;
+            if (count < maxLimit) {
+                count++;
+                updateDisplay();
+                triggerPulse();
+            }
         }
         function decrement() {
-            count--;
-            document.getElementById('counter').textContent = count;
+            if (count > 0) {
+                count--;
+                updateDisplay();
+                triggerPulse();
+            }
         }
         function reset() {
             count = 0;
-            document.getElementById('counter').textContent = count;
+            updateDisplay();
+            triggerPulse();
         }
     </script>
 </body>
