@@ -35,6 +35,7 @@ def execute():
                     if copier_location:
                         center = pyautogui.center(copier_location)
                         print(f"  Bouton copier trouve, clic sur {center}")
+                        time.sleep(2)
                         pyautogui.click(center)
                         return True
                     else:
