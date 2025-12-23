@@ -1,1 +1,1 @@
-DELAY = 2
+DELAY = 1.5
