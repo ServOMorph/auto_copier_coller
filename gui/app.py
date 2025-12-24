@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
+import threading
 from .theme import THEME
 from .process_controller import ProcessController
 from .historique import open_historique
@@ -10,6 +11,9 @@ class AutoCopierGUI(tk.Tk):
     def __init__(self, controller=None):
         super().__init__()
         self.controller = controller or ProcessController()
+        self.click_yes_active = False
+        self.click_yes_thread = None
+        self.mode_var = None
         self.setup_window()
         self.create_widgets()
         self.bind_events()
@@ -19,23 +23,25 @@ class AutoCopierGUI(tk.Tk):
         self.title("Auto Copier Coller")
         self.configure(bg=THEME["bg_primary"])
         self.position_center()
-        self.minsize(200, 150)
+        self.minsize(200, 200)
         self.attributes("-topmost", False)
 
     def position_center(self):
         self.update_idletasks()
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        window_width = screen_width // 8
-        window_height = screen_height // 8
+        window_width = screen_width // 6
+        window_height = screen_height // 4
         x_position = (screen_width - window_width) // 2
         y_position = (screen_height - window_height) // 2
         self.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
     def create_widgets(self):
         self.create_header()
+        self.create_mode_selector()
         self.create_status_section()
         self.create_control_section()
+        self.create_click_yes_button()
         self.create_historique_button()
         self.create_info_section()
         self.create_footer()
@@ -53,6 +59,67 @@ class AutoCopierGUI(tk.Tk):
             bg=THEME["accent_primary"]
         )
         self.header_label.pack(expand=True)
+
+    def create_mode_selector(self):
+        self.mode_frame = tk.Frame(self, bg=THEME["bg_secondary"], padx=5, pady=3)
+        self.mode_frame.pack(fill=tk.X, padx=5, pady=(3, 2))
+
+        self.mode_label = tk.Label(
+            self.mode_frame,
+            text="MODE:",
+            font=(THEME["font_family"], THEME["font_size_xs"], "bold"),
+            fg=THEME["text_secondary"],
+            bg=THEME["bg_secondary"],
+            anchor="w"
+        )
+        self.mode_label.pack(fill=tk.X)
+
+        self.mode_var = tk.StringVar(value="comet_claude")
+
+        self.mode_btn_frame = tk.Frame(self.mode_frame, bg=THEME["bg_secondary"])
+        self.mode_btn_frame.pack(fill=tk.X, pady=(2, 0))
+
+        self.mode_comet_btn = tk.Radiobutton(
+            self.mode_btn_frame,
+            text="Comet <-> Claude",
+            variable=self.mode_var,
+            value="comet_claude",
+            font=(THEME["font_family"], THEME["font_size_xs"]),
+            fg=THEME["text_primary"],
+            bg=THEME["bg_secondary"],
+            selectcolor=THEME["bg_tertiary"],
+            activebackground=THEME["bg_secondary"],
+            activeforeground=THEME["text_primary"],
+            anchor="w",
+            command=self.on_mode_change
+        )
+        self.mode_comet_btn.pack(fill=tk.X)
+
+        self.mode_orch_btn = tk.Radiobutton(
+            self.mode_btn_frame,
+            text="Orch <-> Dev",
+            variable=self.mode_var,
+            value="orch_dev",
+            font=(THEME["font_family"], THEME["font_size_xs"]),
+            fg=THEME["text_primary"],
+            bg=THEME["bg_secondary"],
+            selectcolor=THEME["bg_tertiary"],
+            activebackground=THEME["bg_secondary"],
+            activeforeground=THEME["text_primary"],
+            anchor="w",
+            command=self.on_mode_change
+        )
+        self.mode_orch_btn.pack(fill=tk.X)
+
+    def on_mode_change(self):
+        mode = self.mode_var.get()
+        if mode == "comet_claude":
+            self.header_label.config(text="COMET <-> CLAUDE")
+        else:
+            self.header_label.config(text="ORCH <-> DEV")
+
+    def get_current_mode(self):
+        return self.mode_var.get()
 
     def create_status_section(self):
         self.status_frame = tk.Frame(self, bg=THEME["bg_secondary"], padx=5, pady=3)
@@ -111,6 +178,65 @@ class AutoCopierGUI(tk.Tk):
         )
         self.pause_btn.pack(side=tk.LEFT, expand=True, fill=tk.BOTH, padx=(2, 0))
 
+    def create_click_yes_button(self):
+        self.click_yes_btn = tk.Button(
+            self,
+            text="CLICK YES: OFF",
+            command=self.toggle_click_yes,
+            font=(THEME["font_family"], THEME["font_size_xs"]),
+            bg=THEME["bg_tertiary"],
+            fg=THEME["text_secondary"],
+            activebackground=THEME["accent_primary"],
+            activeforeground=THEME["text_primary"],
+            relief="flat",
+            cursor="hand2"
+        )
+        self.click_yes_btn.pack(fill=tk.X, padx=5, pady=(0, 3))
+
+    def toggle_click_yes(self):
+        if not self.click_yes_active:
+            self.start_click_yes()
+        else:
+            self.stop_click_yes()
+
+    def start_click_yes(self):
+        import click_yes
+        click_yes.stop_requested = False
+        self.click_yes_active = True
+        self.click_yes_btn.config(
+            text="CLICK YES: ON",
+            bg=THEME["success_color"],
+            fg=THEME["bg_primary"]
+        )
+        self.click_yes_thread = threading.Thread(target=self._run_click_yes, daemon=True)
+        self.click_yes_thread.start()
+
+    def _run_click_yes(self):
+        import click_yes
+        try:
+            click_yes.main(poll_interval=0.5)
+        except Exception:
+            pass
+        self.after(0, self._on_click_yes_stopped)
+
+    def _on_click_yes_stopped(self):
+        self.click_yes_active = False
+        self.click_yes_btn.config(
+            text="CLICK YES: OFF",
+            bg=THEME["bg_tertiary"],
+            fg=THEME["text_secondary"]
+        )
+
+    def stop_click_yes(self):
+        import click_yes
+        click_yes.stop_requested = True
+        self.click_yes_active = False
+        self.click_yes_btn.config(
+            text="CLICK YES: OFF",
+            bg=THEME["bg_tertiary"],
+            fg=THEME["text_secondary"]
+        )
+
     def create_historique_button(self):
         self.hist_btn = tk.Button(
             self,
@@ -159,12 +285,20 @@ class AutoCopierGUI(tk.Tk):
 
     def on_close(self):
         self.stop_process()
+        self.stop_click_yes()
         self.destroy()
 
     def start_process(self):
-        from actions import envoie_message_comet, attendre_reponse_comet
-        from actions import envoie_message_claude, attendre_reponse_claude
-        from config import DELAY, DELAY_BEFORE_MAIN, DELAY_MULTIPLIER_ATTENTE_CLAUDE
+        mode = self.get_current_mode()
+        if mode == "comet_claude":
+            self._start_comet_claude()
+        else:
+            self._start_orch_dev()
+
+    def _start_comet_claude(self):
+        from actions.comet_claude import envoie_message_comet, attendre_reponse_comet
+        from actions.comet_claude import envoie_message_claude, attendre_reponse_claude
+        from config import DELAY, DELAY_BEFORE_MAIN
         from outils.logger_echanges import logger
         import lancement
         import time
@@ -184,7 +318,83 @@ class AutoCopierGUI(tk.Tk):
                 (envoie_message_comet.execute, "Envoi message Comet", DELAY, "USER", "COMET"),
                 (attendre_reponse_comet.execute, "Attente reponse Comet", DELAY, "COMET", "CLAUDE"),
                 (envoie_message_claude.execute, "Envoi message Claude", DELAY, "COMET", "CLAUDE"),
-                (attendre_reponse_claude.execute, "Attente reponse Claude", DELAY * DELAY_MULTIPLIER_ATTENTE_CLAUDE, "CLAUDE", "COMET"),
+                (attendre_reponse_claude.execute, "Attente reponse Claude", DELAY, "CLAUDE", "COMET"),
+            ]
+
+            while controller.running:
+                if keyboard.is_pressed('esc'):
+                    controller.running = False
+                    break
+
+                for i, (step_func, step_name, delay, src, dest) in enumerate(steps):
+                    if not controller.running:
+                        break
+
+                    controller.current_step = i
+                    gui_callback("step", step_name, i)
+
+                    if not controller.wait_if_paused():
+                        logger.end_session()
+                        return
+
+                    try:
+                        clipboard_before = pyperclip.paste()
+                        step_func()
+                        clipboard_after = pyperclip.paste()
+                        if clipboard_after != clipboard_before:
+                            logger.log_message(src, dest, clipboard_after, step_name)
+                    except Exception as e:
+                        gui_callback("error", str(e), i)
+                        logger.log_message("SYSTEM", "ERROR", str(e), "ERREUR")
+
+                    time.sleep(delay)
+
+                    if not controller.wait_if_paused():
+                        logger.end_session()
+                        return
+
+                controller.cycle_count += 1
+                gui_callback("cycle", "", controller.cycle_count)
+                time.sleep(DELAY)
+
+            logger.end_session()
+
+        self.controller.start(startup_sequence, self.gui_callback)
+        self.update_ui_started()
+        self.start_timer_update()
+
+    def _start_orch_dev(self):
+        from actions.orch_dev import envoie_message_orch, envoie_message_dev
+        from actions.orch_dev import attendre_reponse_orch, attendre_reponse_dev
+        from config import DELAY, STARTORCH_COMMAND, DELAY_BEFORE_COPY_RESPONSE
+        from outils.logger_echanges import logger
+        from outils.logger import log, log_wait, log_action
+        from outils.affichage_rouge import afficher_texte_action
+        import time
+        import keyboard
+        import pyperclip
+
+        def startup_sequence(controller, gui_callback):
+            gui_callback("step", "Init Orch...", -1)
+            log("=== INITIALISATION ORCH/DEV ===")
+            log_action("COPY_COMMAND", f"copie commande {STARTORCH_COMMAND}")
+            afficher_texte_action("COPY /startorch")
+            log_wait(DELAY_BEFORE_COPY_RESPONSE, "avant copie commande")
+            time.sleep(DELAY_BEFORE_COPY_RESPONSE)
+            pyperclip.copy(STARTORCH_COMMAND)
+            log(f"Commande copiee: {STARTORCH_COMMAND}")
+            envoie_message_orch.execute()
+            attendre_reponse_orch.execute()
+            main_loop(controller, gui_callback)
+
+        def main_loop(controller, gui_callback):
+            logger.start_session()
+
+            steps = [
+                (envoie_message_dev.execute, "Envoi msg Dev", DELAY, "ORCH", "DEV"),
+                (attendre_reponse_dev.execute, "Attente Dev", DELAY, "DEV", "ORCH"),
+                (envoie_message_orch.execute, "Envoi msg Orch", DELAY, "DEV", "ORCH"),
+                (attendre_reponse_orch.execute, "Attente Orch", DELAY, "ORCH", "DEV"),
             ]
 
             while controller.running:
@@ -280,6 +490,9 @@ class AutoCopierGUI(tk.Tk):
         )
         self.pause_btn.config(state=tk.NORMAL, bg=THEME["accent_secondary"], fg=THEME["bg_primary"])
         self.status_indicator.config(text="EN COURS", fg=THEME["success_color"])
+        self.mode_comet_btn.config(state=tk.DISABLED)
+        self.mode_orch_btn.config(state=tk.DISABLED)
+        self.iconify()
 
     def update_ui_stopped(self):
         self.start_btn.config(
@@ -295,6 +508,8 @@ class AutoCopierGUI(tk.Tk):
         )
         self.status_indicator.config(text="ARRETE", fg=THEME["text_muted"])
         self.step_label.config(text="-")
+        self.mode_comet_btn.config(state=tk.NORMAL)
+        self.mode_orch_btn.config(state=tk.NORMAL)
 
     def start_timer_update(self):
         self.update_info()

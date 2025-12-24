@@ -1,6 +1,12 @@
 import json
 import sys
 import subprocess
+import re
+
+def clean_emojis(text):
+    pattern = r'\n*#\s*😎\s*(\n+#\s*❤️\s*)*$'
+    cleaned = re.sub(pattern, '', text)
+    return cleaned.rstrip()
 
 def main():
     try:
@@ -34,12 +40,13 @@ def main():
                     continue
 
         if last_assistant_content:
+            cleaned_content = clean_emojis(last_assistant_content)
             process = subprocess.Popen(
                 ["clip"],
                 stdin=subprocess.PIPE,
                 shell=True
             )
-            process.communicate(input=last_assistant_content.encode("utf-8"))
+            process.communicate(input=cleaned_content.encode("utf-8"))
 
     except Exception:
         pass

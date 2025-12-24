@@ -1,10 +1,9 @@
 import tkinter as tk
+import threading
 from config import DELAY
 
 
-def afficher_rectangle(x, y, width, height, duree=None):
-    if duree is None:
-        duree = DELAY
+def _afficher_rectangle_thread(x, y, width, height, duree):
     root = tk.Tk()
     root.attributes('-topmost', True)
     root.attributes('-transparentcolor', 'white')
@@ -17,9 +16,14 @@ def afficher_rectangle(x, y, width, height, duree=None):
     root.mainloop()
 
 
-def afficher_croix(x, y, duree=None):
+def afficher_rectangle(x, y, width, height, duree=None):
     if duree is None:
         duree = DELAY
+    thread = threading.Thread(target=_afficher_rectangle_thread, args=(x, y, width, height, duree), daemon=True)
+    thread.start()
+
+
+def _afficher_croix_thread(x, y, duree):
     taille = 30
     root = tk.Tk()
     root.attributes('-topmost', True)
@@ -34,9 +38,14 @@ def afficher_croix(x, y, duree=None):
     root.mainloop()
 
 
-def afficher_texte_action(texte, duree=None):
+def afficher_croix(x, y, duree=None):
     if duree is None:
         duree = DELAY
+    thread = threading.Thread(target=_afficher_croix_thread, args=(x, y, duree), daemon=True)
+    thread.start()
+
+
+def _afficher_texte_action_thread(texte, duree):
     root = tk.Tk()
     root.attributes('-topmost', True)
     root.attributes('-transparentcolor', 'white')
@@ -56,3 +65,10 @@ def afficher_texte_action(texte, duree=None):
 
     root.after(int(duree * 1000), root.destroy)
     root.mainloop()
+
+
+def afficher_texte_action(texte, duree=None):
+    if duree is None:
+        duree = DELAY
+    thread = threading.Thread(target=_afficher_texte_action_thread, args=(texte, duree), daemon=True)
+    thread.start()
