@@ -481,6 +481,14 @@ class AutoCopierGUI(tk.Tk):
                 text="ERREUR",
                 fg=THEME["alert_color"]
             )
+        elif event_type == "stop_image":
+            self.update_ui_stopped()
+            self.stop_timer_update()
+            self.status_indicator.config(
+                text="STOP IMAGE",
+                fg=THEME["alert_color"]
+            )
+            self.step_label.config(text="3 coeurs verts")
 
     def update_ui_started(self):
         self.start_btn.config(
