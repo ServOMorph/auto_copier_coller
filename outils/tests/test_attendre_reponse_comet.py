@@ -29,8 +29,8 @@ def afficher_rectangle_rouge(x, y, width, height, duree=3):
     thread.start()
     return thread
 
-IMAGE_ZONE = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\zone_copier_comet.png"
-IMAGE_COPIER = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\copier_comet.png"
+IMAGE_ZONE = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\zone_copier_comet.png"
+IMAGE_COPIER = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\copier_comet.png"
 LEFT_SCREEN_REGION = (0, 0, 960, 1080)
 LEFT_SCREEN_CENTER = (480, 540)
 TIMEOUT = 60

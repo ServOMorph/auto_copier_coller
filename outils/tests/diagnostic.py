@@ -5,7 +5,7 @@ import pyautogui
 from PIL import Image
 import os
 
-IMAGE_PATH = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\message_comet.png"
+IMAGE_PATH = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\message_comet.png"
 LEFT_SCREEN_REGION = (0, 0, 960, 1080)
 OUTPUT_DIR = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\outils\tests"
 

@@ -4,8 +4,8 @@ sys.path.insert(0, r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller")
 
 import pyautogui
 
-IMAGE_ZONE = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\zone_copier_comet.png"
-IMAGE_COPIER = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\copier_comet.png"
+IMAGE_ZONE = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\zone_copier_comet.png"
+IMAGE_COPIER = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\copier_comet.png"
 LEFT_SCREEN_REGION = (0, 0, 960, 1080)
 TIMEOUT = 30
 CONFIDENCE = 0.6

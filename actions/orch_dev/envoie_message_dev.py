@@ -6,7 +6,7 @@ from outils.logger import log, log_hotkey, log_key, log_wait
 from outils.screen_regions import REGION_RIGHT
 from config import DELAY, DELAY_BEFORE_PASTE_CLAUDE, DELAY_AFTER_PASTE_CLAUDE, DELAY_IMAGE_SEARCH_LOOP
 
-IMAGE_MESSAGE = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\message_claudecode.png"
+IMAGE_MESSAGE = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\message_claudecode.png"
 
 def execute():
     log("Recherche bouton message Dev (droite)...")

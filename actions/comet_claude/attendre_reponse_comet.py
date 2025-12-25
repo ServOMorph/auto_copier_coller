@@ -1,14 +1,15 @@
 import time
 import pyautogui
 import pyperclip
+import config
 from config import DELAY, TIMEOUT_ATTENTE_COMET, DELAY_IMAGE_SEARCH_LOOP, DELAY_PAGE_DOWN, DELAY_KEY_PRESS, SCROLL_PAGE_DOWN_COUNT, DELAY_BEFORE_CLICK_COMET
 from outils.affichage_rouge import afficher_rectangle, afficher_croix
 from outils.logger import log, log_click, log_image_found, log_key, log_wait
 from outils.screen_regions import REGION_LEFT
 
-IMAGE_ZONE = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\zone_copier_comet.png"
-IMAGE_ZONE_2 = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\zone_copier_comet_2.png"
-IMAGE_COPIER = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\copier_comet.png"
+IMAGE_ZONE = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\zone_copier_comet.png"
+IMAGE_ZONE_2 = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\zone_copier_comet_2.png"
+IMAGE_COPIER = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\copier_comet.png"
 CONFIDENCE = 0.6
 
 
@@ -19,6 +20,10 @@ def execute():
     page_down_done = False
 
     while True:
+        if config.stop_requested:
+            log("Arret demande par l'utilisateur")
+            return False
+
         iteration += 1
         elapsed = time.time() - start_time
 

@@ -1,11 +1,12 @@
 import time
 import pyautogui
+import config
 from outils.affichage_rouge import afficher_rectangle
 from outils.logger import log, log_image_found
 from outils.screen_regions import REGION_RIGHT
 from config import DELAY_IMAGE_SEARCH_LOOP, TIMEOUT_ATTENTE_CLAUDE
 
-IMAGE_FIN_CONV = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\images\fin_conv_claude.png"
+IMAGE_FIN_CONV = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\assets\images\fin_conv_claude.png"
 CONFIDENCE = 0.8
 
 
@@ -14,6 +15,10 @@ def execute():
     start_time = time.time()
     iteration = 0
     while True:
+        if config.stop_requested:
+            log("Arret demande par l'utilisateur")
+            return False
+
         iteration += 1
         elapsed = time.time() - start_time
 
