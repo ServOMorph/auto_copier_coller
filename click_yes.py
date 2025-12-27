@@ -37,13 +37,19 @@ except Exception:
     pyautogui = None
 
 keyboard_mod = None
+mouse_mod = None
 try:
-    from pynput import keyboard  # type: ignore
+    from pynput import keyboard, mouse  # type: ignore
     keyboard_mod = keyboard
+    mouse_mod = mouse
 except Exception:
     keyboard_mod = None
+    mouse_mod = None
 
 stop_requested = False
+auto_stop_on_input = False
+last_mouse_pos = None
+mouse_move_threshold = 50
 
 def _center_from_tuple(t):
     if len(t) == 2:
@@ -119,22 +125,41 @@ def on_press(key):
         if key == keyboard_mod.Key.esc:
             stop_requested = True
             return False
+        if auto_stop_on_input:
+            stop_requested = True
+            return False
     except Exception:
         pass
 
+def on_mouse_move(x, y):
+    global stop_requested, last_mouse_pos
+    if not auto_stop_on_input:
+        return
+    if last_mouse_pos is None:
+        last_mouse_pos = (x, y)
+        return
+    dx = abs(x - last_mouse_pos[0])
+    dy = abs(y - last_mouse_pos[1])
+    if dx > mouse_move_threshold or dy > mouse_move_threshold:
+        stop_requested = True
+        return False
+    last_mouse_pos = (x, y)
+
 def main(poll_interval=0.5):
-    global stop_requested
+    global stop_requested, last_mouse_pos
+
+    last_mouse_pos = None
 
     if not os.path.isfile(IMAGE_PATH):
         print(f"Image introuvable: {IMAGE_PATH}")
         sys.exit(1)
 
     if find_image_fn:
-        print("Utilisation de 'outils.image_finder' pour la détection.")
+        print("Utilisation de 'outils.image_finder' pour la detection.")
     elif pyautogui:
-        print("Utilisation de 'pyautogui' pour la détection (fallback).")
+        print("Utilisation de 'pyautogui' pour la detection (fallback).")
     else:
-        print("Aucun moyen de détecter l'image. Installez 'pyautogui' ou ajoutez 'outils.image_finder'.")
+        print("Aucun moyen de detecter l'image. Installez 'pyautogui' ou ajoutez 'outils.image_finder'.")
         sys.exit(1)
 
     if click_fn:
@@ -145,13 +170,20 @@ def main(poll_interval=0.5):
         print("Aucun moyen de cliquer. Installez 'pyautogui' ou ajoutez 'outils.mouse_controller'.")
         sys.exit(1)
 
-    listener = None
+    kb_listener = None
+    mouse_listener = None
+
     if keyboard_mod:
-        listener = keyboard_mod.Listener(on_press=on_press)
-        listener.start()
-        print("Appuyez sur Esc pour arrêter.")
+        kb_listener = keyboard_mod.Listener(on_press=on_press)
+        kb_listener.start()
+        print("Appuyez sur Esc pour arreter.")
     else:
-        print("Le module 'pynput' n'est pas installé; utilisez Ctrl+C pour arrêter.")
+        print("Le module 'pynput' n'est pas installe; utilisez Ctrl+C pour arreter.")
+
+    if mouse_mod and auto_stop_on_input:
+        mouse_listener = mouse_mod.Listener(on_move=on_mouse_move)
+        mouse_listener.start()
+        print("Auto-stop sur mouvement souris/clavier: ACTIF")
 
     try:
         while not stop_requested:
@@ -179,9 +211,11 @@ def main(poll_interval=0.5):
         pass
     finally:
         stop_requested = True
-        if listener:
-            listener.stop()
-        print("Arrêt demandé, sortie.")
+        if kb_listener:
+            kb_listener.stop()
+        if mouse_listener:
+            mouse_listener.stop()
+        print("Arret demande, sortie.")
 
 if __name__ == "__main__":
     main()

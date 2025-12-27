@@ -1,10 +1,16 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
 from datetime import datetime
 import threading
+import json
+from pathlib import Path
 from .theme import THEME
 from .process_controller import ProcessController
 from .historique import open_historique
+from .config_window import open_config
+import config
+
+PREFS_FILE = Path(__file__).parent.parent / "user_prefs.json"
 
 
 class AutoCopierGUI(tk.Tk):
@@ -14,10 +20,70 @@ class AutoCopierGUI(tk.Tk):
         self.click_yes_active = False
         self.click_yes_thread = None
         self.mode_var = None
+        self.load_prefs()
         self.setup_window()
         self.create_widgets()
         self.bind_events()
         self.update_timer_id = None
+
+    def load_prefs(self):
+        if PREFS_FILE.exists():
+            try:
+                prefs = json.loads(PREFS_FILE.read_text(encoding="utf-8"))
+                config.PROMPT_PATH = prefs.get("prompt_path", config.PROMPT_PATH)
+                cfg = prefs.get("config", {})
+                for key, value in cfg.items():
+                    if hasattr(config, key):
+                        setattr(config, key, value)
+                self._update_config_aliases()
+            except Exception:
+                pass
+
+    def save_prefs(self):
+        prefs = {
+            "prompt_path": config.PROMPT_PATH,
+            "config": {
+                "DELAY": config.DELAY,
+                "DELAY_IMAGE_SEARCH_LOOP": config.DELAY_IMAGE_SEARCH_LOOP,
+                "DELAY_KEY_PRESS": config.DELAY_KEY_PRESS,
+                "DELAY_PAUSE_POLLING": config.DELAY_PAUSE_POLLING,
+                "DELAY_BEFORE_PASTE": config.DELAY_BEFORE_PASTE,
+                "DELAY_AFTER_PASTE": config.DELAY_AFTER_PASTE,
+                "DELAY_BEFORE_CLICK_COPY": config.DELAY_BEFORE_CLICK_COPY,
+                "DELAY_BEFORE_COPY_RESPONSE": config.DELAY_BEFORE_COPY_RESPONSE,
+                "DELAY_PAGE_DOWN": config.DELAY_PAGE_DOWN,
+                "SCROLL_PAGE_DOWN_COUNT": config.SCROLL_PAGE_DOWN_COUNT,
+                "TIMEOUT_ATTENTE_COMET": config.TIMEOUT_ATTENTE_COMET,
+                "TIMEOUT_ATTENTE_CLAUDE": config.TIMEOUT_ATTENTE_CLAUDE,
+                "STARTORCH_COMMAND": config.STARTORCH_COMMAND,
+                "STARTDEV_COMMAND": config.STARTDEV_COMMAND,
+                "DELAY_CLAUDE_SOLO_END": config.DELAY_CLAUDE_SOLO_END,
+            }
+        }
+        PREFS_FILE.write_text(json.dumps(prefs, indent=2), encoding="utf-8")
+
+    def _update_config_aliases(self):
+        config.DELAY_BEFORE_MAIN = config.DELAY
+        config.DELAY_BEFORE_PASTE_COMET = config.DELAY_BEFORE_PASTE
+        config.DELAY_AFTER_PASTE_COMET = config.DELAY_AFTER_PASTE
+        config.DELAY_BEFORE_CLICK_COMET = config.DELAY_BEFORE_CLICK_COPY
+        config.DELAY_BEFORE_PASTE_CLAUDE = config.DELAY_BEFORE_PASTE
+        config.DELAY_AFTER_PASTE_CLAUDE = config.DELAY_AFTER_PASTE
+
+    def select_prompt_file(self):
+        initial_dir = Path(config.PROMPT_PATH).parent
+        initial_file = Path(config.PROMPT_PATH).name
+        filepath = filedialog.askopenfilename(
+            title="Selectionner le prompt init Comet",
+            initialdir=initial_dir,
+            initialfile=initial_file,
+            filetypes=[("Markdown", "*.md"), ("Tous fichiers", "*.*")]
+        )
+        if filepath:
+            config.PROMPT_PATH = filepath
+            self.save_prefs()
+            return True
+        return False
 
     def setup_window(self):
         self.title("Auto Copier Coller")
@@ -30,8 +96,8 @@ class AutoCopierGUI(tk.Tk):
         self.update_idletasks()
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        window_width = screen_width // 6
-        window_height = screen_height // 4
+        window_width = screen_width // 5
+        window_height = screen_height // 3
         x_position = (screen_width - window_width) // 2
         y_position = (screen_height - window_height) // 2
         self.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
@@ -111,12 +177,30 @@ class AutoCopierGUI(tk.Tk):
         )
         self.mode_orch_btn.pack(fill=tk.X)
 
+        self.mode_solo_btn = tk.Radiobutton(
+            self.mode_btn_frame,
+            text="Claude Solo",
+            variable=self.mode_var,
+            value="claude_solo",
+            font=(THEME["font_family"], THEME["font_size_xs"]),
+            fg=THEME["text_primary"],
+            bg=THEME["bg_secondary"],
+            selectcolor=THEME["bg_tertiary"],
+            activebackground=THEME["bg_secondary"],
+            activeforeground=THEME["text_primary"],
+            anchor="w",
+            command=self.on_mode_change
+        )
+        self.mode_solo_btn.pack(fill=tk.X)
+
     def on_mode_change(self):
         mode = self.mode_var.get()
         if mode == "comet_claude":
             self.header_label.config(text="COMET <-> CLAUDE")
-        else:
+        elif mode == "orch_dev":
             self.header_label.config(text="ORCH <-> DEV")
+        else:
+            self.header_label.config(text="CLAUDE SOLO")
 
     def get_current_mode(self):
         return self.mode_var.get()
@@ -179,8 +263,11 @@ class AutoCopierGUI(tk.Tk):
         self.pause_btn.pack(side=tk.LEFT, expand=True, fill=tk.BOTH, padx=(2, 0))
 
     def create_click_yes_button(self):
+        self.click_yes_frame = tk.Frame(self, bg=THEME["bg_primary"])
+        self.click_yes_frame.pack(fill=tk.X, padx=5, pady=(0, 3))
+
         self.click_yes_btn = tk.Button(
-            self,
+            self.click_yes_frame,
             text="CLICK YES: OFF",
             command=self.toggle_click_yes,
             font=(THEME["font_family"], THEME["font_size_xs"]),
@@ -191,7 +278,21 @@ class AutoCopierGUI(tk.Tk):
             relief="flat",
             cursor="hand2"
         )
-        self.click_yes_btn.pack(fill=tk.X, padx=5, pady=(0, 3))
+        self.click_yes_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        self.auto_stop_var = tk.BooleanVar(value=False)
+        self.auto_stop_cb = tk.Checkbutton(
+            self.click_yes_frame,
+            text="Auto",
+            variable=self.auto_stop_var,
+            font=(THEME["font_family"], THEME["font_size_xs"]),
+            fg=THEME["text_secondary"],
+            bg=THEME["bg_primary"],
+            selectcolor=THEME["bg_tertiary"],
+            activebackground=THEME["bg_primary"],
+            activeforeground=THEME["text_primary"]
+        )
+        self.auto_stop_cb.pack(side=tk.RIGHT, padx=(3, 0))
 
     def toggle_click_yes(self):
         if not self.click_yes_active:
@@ -202,6 +303,7 @@ class AutoCopierGUI(tk.Tk):
     def start_click_yes(self):
         import click_yes
         click_yes.stop_requested = False
+        click_yes.auto_stop_on_input = self.auto_stop_var.get()
         self.click_yes_active = True
         self.click_yes_btn.config(
             text="CLICK YES: ON",
@@ -238,8 +340,11 @@ class AutoCopierGUI(tk.Tk):
         )
 
     def create_historique_button(self):
+        self.btn_row_frame = tk.Frame(self, bg=THEME["bg_primary"])
+        self.btn_row_frame.pack(fill=tk.X, padx=5, pady=(0, 3))
+
         self.hist_btn = tk.Button(
-            self,
+            self.btn_row_frame,
             text="HISTORIQUE",
             command=lambda: open_historique(self),
             font=(THEME["font_family"], THEME["font_size_xs"]),
@@ -250,7 +355,27 @@ class AutoCopierGUI(tk.Tk):
             relief="flat",
             cursor="hand2"
         )
-        self.hist_btn.pack(fill=tk.X, padx=5, pady=(0, 3))
+        self.hist_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
+
+        self.config_btn = tk.Button(
+            self.btn_row_frame,
+            text="CONFIG",
+            command=self.open_config_window,
+            font=(THEME["font_family"], THEME["font_size_xs"]),
+            bg=THEME["bg_tertiary"],
+            fg=THEME["text_secondary"],
+            activebackground=THEME["accent_primary"],
+            activeforeground=THEME["text_primary"],
+            relief="flat",
+            cursor="hand2"
+        )
+        self.config_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
+
+    def open_config_window(self):
+        open_config(self, self.on_config_saved)
+
+    def on_config_saved(self):
+        self.save_prefs()
 
     def create_info_section(self):
         self.info_frame = tk.Frame(self, bg=THEME["bg_tertiary"], padx=5, pady=2)
@@ -292,10 +417,15 @@ class AutoCopierGUI(tk.Tk):
         mode = self.get_current_mode()
         if mode == "comet_claude":
             self._start_comet_claude()
-        else:
+        elif mode == "orch_dev":
             self._start_orch_dev()
+        else:
+            self._start_claude_solo()
 
     def _start_comet_claude(self):
+        if not self.select_prompt_file():
+            return
+
         from actions.comet_claude import envoie_message_comet, attendre_reponse_comet
         from actions.comet_claude import envoie_message_claude, attendre_reponse_claude
         from config import DELAY, DELAY_BEFORE_MAIN
@@ -439,6 +569,46 @@ class AutoCopierGUI(tk.Tk):
         self.update_ui_started()
         self.start_timer_update()
 
+    def _start_claude_solo(self):
+        from actions.claude_solo import boucle_claude_solo
+        from config import DELAY
+        from outils.logger import log
+        import time
+        import keyboard
+
+        def main_loop(controller, gui_callback):
+            log("=== DEMARRAGE CLAUDE SOLO ===")
+
+            while controller.running:
+                if keyboard.is_pressed('esc'):
+                    controller.running = False
+                    break
+
+                gui_callback("step", "Attente fin conv", 0)
+
+                if not controller.wait_if_paused():
+                    return
+
+                try:
+                    result = boucle_claude_solo.execute()
+                    if result:
+                        controller.cycle_count += 1
+                        gui_callback("cycle", "", controller.cycle_count)
+                except Exception as e:
+                    gui_callback("error", str(e), 0)
+                    log(f"Erreur: {e}")
+
+                time.sleep(DELAY)
+
+                if not controller.wait_if_paused():
+                    return
+
+            log("=== FIN CLAUDE SOLO ===")
+
+        self.controller.start(main_loop, self.gui_callback)
+        self.update_ui_started()
+        self.start_timer_update()
+
     def stop_process(self):
         self.controller.stop()
         self.update_ui_stopped()
@@ -473,7 +643,11 @@ class AutoCopierGUI(tk.Tk):
     def _handle_callback(self, event_type, data, extra):
         if event_type == "step":
             step_num = extra + 1
-            self.step_label.config(text=f"{step_num}/4: {data[:15]}")
+            mode = self.get_current_mode()
+            if mode == "claude_solo":
+                self.step_label.config(text=data[:20])
+            else:
+                self.step_label.config(text=f"{step_num}/4: {data[:15]}")
         elif event_type == "cycle":
             pass
         elif event_type == "error":
@@ -500,6 +674,7 @@ class AutoCopierGUI(tk.Tk):
         self.status_indicator.config(text="EN COURS", fg=THEME["success_color"])
         self.mode_comet_btn.config(state=tk.DISABLED)
         self.mode_orch_btn.config(state=tk.DISABLED)
+        self.mode_solo_btn.config(state=tk.DISABLED)
         self.iconify()
 
     def update_ui_stopped(self):
@@ -518,6 +693,7 @@ class AutoCopierGUI(tk.Tk):
         self.step_label.config(text="-")
         self.mode_comet_btn.config(state=tk.NORMAL)
         self.mode_orch_btn.config(state=tk.NORMAL)
+        self.mode_solo_btn.config(state=tk.NORMAL)
 
     def start_timer_update(self):
         self.update_info()

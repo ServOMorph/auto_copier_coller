@@ -26,13 +26,14 @@ Communication automatisee entre deux instances Claude Code :
 
 1. Copier `/startorch` dans le presse-papier
 2. Envoyer a Orch (fenetre gauche)
-3. Attendre reponse Orch + copier reponse
+3. Copier `/startdev` dans le presse papier
+4. Envoyer à Dev (fenetre droite)
+5. Attendre reponse Orch
 
 ### Boucle principale
 
 ```
 +------------------+
-| Copier reponse   |
 | Orch -> Dev      |
 +--------+---------+
          |
@@ -45,12 +46,10 @@ Communication automatisee entre deux instances Claude Code :
          v
 +------------------+
 | Attendre reponse |
-| Dev + copier     |
 +--------+---------+
          |
          v
 +------------------+
-| Copier reponse   |
 | Dev -> Orch      |
 +--------+---------+
          |
@@ -63,7 +62,6 @@ Communication automatisee entre deux instances Claude Code :
          v
 +------------------+
 | Attendre reponse |
-| Orch + copier    |
 +--------+---------+
          |
          +-------> Retour au debut de la boucle

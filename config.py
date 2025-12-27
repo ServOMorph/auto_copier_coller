@@ -1,6 +1,16 @@
 # Configuration des delais (en secondes)
 
 # =============================================================================
+# FLAG GLOBAL D'ARRET
+# =============================================================================
+stop_requested = False
+
+# =============================================================================
+# CHEMIN DU PROMPT INIT COMET
+# =============================================================================
+PROMPT_PATH = r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\prompt_init_comet.md"
+
+# =============================================================================
 # DELAIS COMMUNS (utilises dans COMET/CLAUDE et ORCH/DEV)
 # =============================================================================
 
@@ -56,6 +66,16 @@ TIMEOUT_ATTENTE_CLAUDE = 300
 
 # Commande pour initialiser l'orchestrateur
 STARTORCH_COMMAND = "/startorch"
+
+# Commande pour initialiser le developpeur
+STARTDEV_COMMAND = "/startdev"
+
+# =============================================================================
+# MODE CLAUDE SOLO - Delais specifiques
+# =============================================================================
+
+# Delai a la fin du workflow Claude Solo (apres envoi message)
+DELAY_CLAUDE_SOLO_END = 2
 
 # =============================================================================
 # ALIASES POUR RETROCOMPATIBILITE

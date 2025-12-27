@@ -1,14 +1,15 @@
 import pyperclip
 from pathlib import Path
+import config
 
 
 def execute():
-    prompt_path = Path(r"C:\Users\raph6\Documents\ServOMorph\auto_copier_coller\prompt_init_comet.md")
+    prompt_path = Path(config.PROMPT_PATH)
 
     contenu = prompt_path.read_text(encoding="utf-8")
     pyperclip.copy(contenu)
 
-    print("Prompt copié dans le presse-papier.")
+    print(f"Prompt copie: {prompt_path.name}")
 
 
 if __name__ == "__main__":
